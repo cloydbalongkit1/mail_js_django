@@ -1,4 +1,4 @@
-const address = "http://127.0.0.1:8000/";
+const url = "http://127.0.0.1:8000/";
 
 document.addEventListener('DOMContentLoaded', function() {
 
@@ -15,19 +15,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 function compose_email() {
-  // Show compose view and hide other views
+  
   document.querySelector('#emails-view').style.display = 'none';
   document.querySelector('#compose-view').style.display = 'block';
 
   document.querySelector('#compose-form').addEventListener('submit', function(event) {
+
+    // JS will handle the forms input not the backend part. Or return false at the end.
     event.preventDefault();
-  
-    // values
+
     const recipients = document.querySelector("#compose-recipients").value;
     const subject = document.querySelector("#compose-subject").value;
     const body = document.querySelector("#compose-body").value;
 
-    fetch(`${address}/emails`, {
+    fetch(`${url}/emails`, {
       method: 'POST',
       body: JSON.stringify({
           recipients: recipients,
@@ -36,63 +37,94 @@ function compose_email() {
         })
     })
     .then(response => response.json())
-    .then(result => {
-        console.log(result);
-    });
     
-    // Clear out composition fields
     document.querySelector('#compose-recipients').value = '';
     document.querySelector('#compose-subject').value = '';
     document.querySelector('#compose-body').value = '';
+
+    load_mailbox('inbox')
   });
 }
 
 
 
 function load_mailbox(mailbox) {
-  // Show the mailbox and hide other views
+  
   document.querySelector('#emails-view').style.display = 'block';
   document.querySelector('#compose-view').style.display = 'none';
 
-  // Show the mailbox name
   document.querySelector('#emails-view').innerHTML = `<h3>${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`;
 
-  // Fetch the emails for the specified mailbox
-  fetch(`${address}/emails/${mailbox}`)
+  fetch(`${url}/emails/${mailbox}`)
     .then(response => response.json())
     .then(emails => {
       const emailsView = document.querySelector('#emails-view');
 
-      // Clear previous content
-      emailsView.innerHTML = `<h3>${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`;
-
-      // Check if there are any emails
       if (emails.length === 0) {
+
         const messageElement = document.createElement('div');
-        messageElement.style.border = 'solid';
-        messageElement.style.padding = '10px';
+        messageElement.classList.add('email-boxes');
+
         messageElement.innerHTML = "No email";
         emailsView.appendChild(messageElement);
+
       } else {
+
         emails.forEach(email => {
           const emailElement = document.createElement('div');
-          emailElement.style.border = 'solid';
-          emailElement.style.padding = '10px';
+          emailElement.classList.add('email-boxes');
+
           emailElement.innerHTML = `
-            <strong>${email.sender}</strong> 
-            <strong> | ${email.subject} | </strong> 
-            <small>${email.timestamp}</small>
+            <div class="email-info">
+              <strong>${email.sender}</strong> 
+            </div>
+            <div class="email-subject">
+              <p>${email.subject}</p> 
+            </div>
+            <div class="email-timestamp">
+              <small>${email.timestamp}</small>
+            </div>
           `;
+
+          emailElement.addEventListener('click', () => email_clicked(email.id));
           emailsView.appendChild(emailElement);
         });
       }
     })
     .catch(error => {
       console.log('Error fetching emails:', error);
+
       const errorElement = document.createElement('div');
-      errorElement.style.border = 'solid';
-      errorElement.style.padding = '10px';
+      errorElement.classList.add('email-boxes');
+
       errorElement.innerHTML = "Failed to load emails.";
       document.querySelector('#emails-view').appendChild(errorElement);
+    });
+}
+
+
+
+function email_clicked(email_id) {
+    // alert("testing")
+    // console.log(email_id);
+
+    fetch(`${url}/emails/${email_id}`)
+      .then(response => response.json())
+      .then(() => {
+        return fetch(`${url}/emails/${email_id}`, {
+                  method: 'PUT',
+                  body: JSON.stringify({
+                  read: true
+                })
+              })
+      .then( response => {
+        if (response.ok) {
+          console.log(`Email ${email_id} read successfully.`);
+        } else {
+          console.log(`Failed to read email ${email_id}.`);
+        }
+      })
+
+      
     });
 }
