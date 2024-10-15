@@ -1,7 +1,10 @@
-const url = "http://127.0.0.1:8000/";
+let url;
 
 document.addEventListener('DOMContentLoaded', function() {
 
+  url = window.location.href;
+  console.log(url);
+  
   // Use buttons to toggle between views
   document.querySelector('#inbox').addEventListener('click', () => load_mailbox('inbox'));
   document.querySelector('#sent').addEventListener('click', () => load_mailbox('sent'));
@@ -10,18 +13,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // By default, load the inbox
   load_mailbox('inbox');
+
 });
 
 
 
-function compose_email() {
-  
+function compose_email(senderEmail) {
+
+  if (typeof senderEmail !== 'string') {
+    senderEmail = '';
+  }
   document.querySelector('#emails-view').style.display = 'none';
   document.querySelector('#compose-view').style.display = 'block';
+  document.querySelector('#email_content-view').style.display = 'none';
+
+  document.querySelector('#compose-recipients').value = senderEmail;
 
   document.querySelector('#compose-form').addEventListener('submit', function(event) {
 
-    // JS will handle the forms input not the backend part. Or return false at the end.
+    // Or return false at the end. >>> not sent to backend
     event.preventDefault();
 
     const recipients = document.querySelector("#compose-recipients").value;
@@ -49,9 +59,9 @@ function compose_email() {
 
 
 function load_mailbox(mailbox) {
-  
   document.querySelector('#emails-view').style.display = 'block';
   document.querySelector('#compose-view').style.display = 'none';
+  document.querySelector('#email_content-view').style.display = 'none';
 
   document.querySelector('#emails-view').innerHTML = `<h3>${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`;
 
@@ -61,7 +71,6 @@ function load_mailbox(mailbox) {
       const emailsView = document.querySelector('#emails-view');
 
       if (emails.length === 0) {
-
         const messageElement = document.createElement('div');
         messageElement.classList.add('email-boxes');
 
@@ -69,24 +78,31 @@ function load_mailbox(mailbox) {
         emailsView.appendChild(messageElement);
 
       } else {
-
         emails.forEach(email => {
+
           const emailElement = document.createElement('div');
           emailElement.classList.add('email-boxes');
 
-          emailElement.innerHTML = `
-            <div class="email-info">
-              <strong>${email.sender}</strong> 
-            </div>
-            <div class="email-subject">
-              <p>${email.subject}</p> 
-            </div>
-            <div class="email-timestamp">
-              <small>${email.timestamp}</small>
-            </div>
-          `;
+          if (email.read && mailbox !== 'sent' && mailbox !== 'archive') {
+            emailElement.style.backgroundColor = '#B7B7B7';
+          } else {
+            emailElement.style.backgroundColor = '#f9f9f9';
+          }
 
-          emailElement.addEventListener('click', () => email_clicked(email.id));
+          emailElement.innerHTML = 
+            `
+              <div class="email-info">
+                <strong>From: ${email.sender}</strong> 
+              </div>
+              <div class="email-subject">
+                <p><strong>Subject:</strong> ${email.subject}</p> 
+              </div>
+              <div class="email-timestamp">
+                <small>${email.timestamp}</small>
+              </div>
+            `;
+
+          emailElement.addEventListener('click', () => email_clicked(email.id, mailbox));
           emailsView.appendChild(emailElement);
         });
       }
@@ -104,19 +120,48 @@ function load_mailbox(mailbox) {
 
 
 
-function email_clicked(email_id) {
-    // alert("testing")
-    // console.log(email_id);
-
+function email_clicked(email_id, mailbox) {
     fetch(`${url}/emails/${email_id}`)
       .then(response => response.json())
-      .then(() => {
+      .then((content) => {
+        document.querySelector('#emails-view').style.display = 'none';
+        document.querySelector('#compose-view').style.display = 'none';
+        document.querySelector('#email_content-view').style.display = 'block';
+
+        const contentElementParent = document.getElementById('email_content-view')
+        contentElementParent.innerHTML = ''
+
+        const contentElement = document.createElement('div')
+        contentElement.innerHTML = 
+        `
+        <p><strong>From:</strong> ${content.sender}</p>
+        <p><strong>To:</strong> ${content.recipients}</p>
+        <p><strong>Subject:</strong> ${content.subject}</p>
+        <p><strong>Timestamp:</strong> ${content.timestamp}</p>
+        <button class="btn btn-primary reply-button">Reply</button>
+        <hr><br>
+        <p>${content.body}</p>
+        `
+        contentElementParent.appendChild(contentElement)
+
+        if (mailbox === 'sent') {
+          const buttonElement = document.querySelector('.reply-button');
+          if (buttonElement) {
+            buttonElement.classList.add('hide-button')
+          }
+        }
+        
+        const replyButton = document.querySelector('.reply-button');
+        replyButton.addEventListener('click', () => {
+          compose_email(content.sender)
+        })
         return fetch(`${url}/emails/${email_id}`, {
                   method: 'PUT',
                   body: JSON.stringify({
                   read: true
                 })
               })
+
       .then( response => {
         if (response.ok) {
           console.log(`Email ${email_id} read successfully.`);
@@ -124,7 +169,6 @@ function email_clicked(email_id) {
           console.log(`Failed to read email ${email_id}.`);
         }
       })
-
-      
     });
 }
+

@@ -9,7 +9,6 @@ textarea {
     border-radius: 10px;
     padding: 10px;
     margin-bottom: 5px;
-    background-color: #f9f9f9;
     transition: box-shadow 0.3s ease;
     height: 50px;
     cursor: pointer;
@@ -33,5 +32,9 @@ textarea {
 
 .email-timestamp {
     white-space: nowrap;
+}
+
+.hide-button {
+    display: none;
 }
 
