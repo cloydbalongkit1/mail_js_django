@@ -16,16 +16,30 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-function compose_email(senderEmail) {
+function compose_email(senderEmail, subject) {
 
   if (typeof senderEmail !== 'string') {
     senderEmail = '';
   }
+  console.log(subject);
+  
+
   document.querySelector('#emails-view').style.display = 'none';
   document.querySelector('#compose-view').style.display = 'block';
   document.querySelector('#email_content-view').style.display = 'none';
 
   document.querySelector('#compose-recipients').value = senderEmail;
+  if (subject){
+    if (subject.startsWith('RE:')) {
+      document.querySelector('#compose-subject').value = subject
+    } else {
+      document.querySelector('#compose-subject').value = `RE: ${subject}`
+    }
+  } else {
+    document.querySelector('#compose-subject').value = ''
+  }
+  
+  
 
   document.querySelector('#compose-form').addEventListener('submit', function(event) {
 
@@ -210,7 +224,7 @@ function add_event_listeners(content, mailbox) {
   
   const replyButton = document.querySelector('.reply-button');
   replyButton.addEventListener('click', () => {
-      compose_email(content.sender);
+      compose_email(content.sender, content.subject); // --------------------------------------------------
   });
 }
 
