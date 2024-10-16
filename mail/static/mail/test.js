@@ -1,7 +1,8 @@
+// ----------------------------------------------------------------------previous code------------------------
 let url;
 document.addEventListener('DOMContentLoaded', function() {
   url = window.location.href;
-
+  
   // Use buttons to toggle between views
   document.querySelector('#inbox').addEventListener('click', () => load_mailbox('inbox'));
   document.querySelector('#sent').addEventListener('click', () => load_mailbox('sent'));
@@ -117,96 +118,84 @@ function load_mailbox(mailbox) {
 
 
 
-//-------------------------------------------------------------functions supports each other
 function email_clicked(email_id, mailbox) {
-  fetch(`${url}/emails/${email_id}`)
+    fetch(`${url}/emails/${email_id}`)
       .then(response => response.json())
       .then((content) => {
-          display_email_content(content, mailbox);
-          mark_email_as_read(email_id);
-      });
-}
+        document.querySelector('#emails-view').style.display = 'none';
+        document.querySelector('#compose-view').style.display = 'none';
+        document.querySelector('#email_content-view').style.display = 'block';
+
+        const contentElementParent = document.getElementById('email_content-view')
+        contentElementParent.innerHTML = ''
+
+        const contentElement = document.createElement('div')
+        contentElement.innerHTML = 
+        `
+        <p><strong>From:</strong> ${content.sender}</p>
+        <p><strong>To:</strong> ${content.recipients}</p>
+        <p><strong>Subject:</strong> ${content.subject}</p>
+        <p><strong>Timestamp:</strong> ${content.timestamp}</p>
+        <button class="btn btn-primary reply-button">Reply</button>
+        <button class="ml-2 btn btn-outline-info archive-button">Archive</button>
+        <hr><br>
+        <p>${content.body}</p>
+        `
+        contentElementParent.appendChild(contentElement)
+
+        if (mailbox === 'sent') {
+          const buttonElement = document.querySelector('.reply-button');
+          const archiveButton = document.querySelector('.archive-button')
+
+          if (buttonElement && archiveButton) {
+            buttonElement.classList.add('hide-button')
+            archiveButton.classList.add('hide-button')
+          }
+        }
 
 
-function display_email_content(content, mailbox) {
-  document.querySelector('#emails-view').style.display = 'none';
-  document.querySelector('#compose-view').style.display = 'none';
-  document.querySelector('#email_content-view').style.display = 'block';
+        if (mailbox === 'archive') {
+          const buttonElement = document.querySelector('.archive-button');
+          buttonElement.innerHTML = 'Unarchive'
 
-  const contentElementParent = document.getElementById('email_content-view');
-  contentElementParent.innerHTML = '';
-  
-  const contentElement = document.createElement('div');
-  contentElement.innerHTML = 
-    `
-      <p><strong>From:</strong> ${content.sender}</p>
-      <p><strong>To:</strong> ${content.recipients}</p>
-      <p><strong>Subject:</strong> ${content.subject}</p>
-      <p><strong>Timestamp:</strong> ${content.timestamp}</p>
-      
-      <button class="btn btn-primary reply-button">Reply</button>
-      <button class="ml-2 btn btn-outline-info archive-button">Archive</button>
-      <hr><br>
-      <p>${content.body}</p>
-    `;
-  contentElementParent.appendChild(contentElement);
+          // ----------------------make a function that will revert the archived status--------
+        }
 
-  if (mailbox === 'sent') {
-      hide_buttons(['.reply-button', '.archive-button']);
-  }
-  if (mailbox === 'archive') {
-      const archiveButton = document.querySelector('.archive-button');
-      archiveButton.innerHTML = 'Unarchive';
-  }
+        const archiveButton = document.querySelector('.archive-button');
+        archiveButton.addEventListener('click', () => {
 
-  add_event_listeners(content);
-}
-
-
-function hide_buttons(buttonClasses) {
-  buttonClasses.forEach(buttonClass => {
-      const buttonElement = document.querySelector(buttonClass);
-      if (buttonElement) {
-          buttonElement.classList.add('hide-button');
-      }
-  });
-}
-
-
-function add_event_listeners(content) {
-  const archiveButton = document.querySelector('.archive-button');
-  archiveButton.addEventListener('click', () => {
-      console.log('Archive Clicked');
-      fetch(`${url}/emails/${content.id}`, {
-          method: 'PUT',
-          body: JSON.stringify({
+          console.log('Archive Clicked');
+          fetch(`${url}/emails/${email_id}`, {
+            method: 'PUT',
+            body: JSON.stringify({
               archived: true
-          })
-      }).then(() => {
-          alert(`${content.subject} is successfully added to the archived folder.`);
-          return load_mailbox('archive');
-      });
-  });
+            })
+          });
+          
+          alert(`${content.subject} is successfully added to the archived folder.`)
+          return load_mailbox('archive')
+        })
+      
+        const replyButton = document.querySelector('.reply-button');
+        replyButton.addEventListener('click', () => {
+          compose_email(content.sender)
+        })
 
-  const replyButton = document.querySelector('.reply-button');
-  replyButton.addEventListener('click', () => {
-      compose_email(content.sender);
-  });
-}
-
-
-function mark_email_as_read(email_id) {
-  return fetch(`${url}/emails/${email_id}`, {
-      method: 'PUT',
-      body: JSON.stringify({
-          read: true
-      })
-  }).then(response => {
-      if (response.ok) {
+        return fetch(`${url}/emails/${email_id}`, {
+                  method: 'PUT',
+                  body: JSON.stringify({
+                  read: true
+                })
+              })
+      
+      // checking the clicked email (ok or not)
+      .then( response => {
+        if (response.ok) {
           console.log(`Email ${email_id} read successfully.`);
-      } else {
+        } else {
           console.log(`Failed to read email ${email_id}.`);
-      }
-  });
+        }
+      })
+    });
 }
 
