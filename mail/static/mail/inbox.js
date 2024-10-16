@@ -1,4 +1,5 @@
 let url;
+
 document.addEventListener('DOMContentLoaded', function() {
   url = window.location.href;
 
@@ -154,12 +155,7 @@ function display_email_content(content, mailbox) {
   if (mailbox === 'sent') {
       hide_buttons(['.reply-button', '.archive-button']);
   }
-  if (mailbox === 'archive') {
-      const archiveButton = document.querySelector('.archive-button');
-      archiveButton.innerHTML = 'Unarchive';
-  }
-
-  add_event_listeners(content);
+  add_event_listeners(content, mailbox);
 }
 
 
@@ -173,21 +169,45 @@ function hide_buttons(buttonClasses) {
 }
 
 
-function add_event_listeners(content) {
+function add_event_listeners(content, mailbox) {
+
   const archiveButton = document.querySelector('.archive-button');
-  archiveButton.addEventListener('click', () => {
+
+  if (mailbox === 'archive') {
+
+    archiveButton.innerHTML = 'Unarchive';
+    archiveButton.addEventListener('click', () => {
+
+      console.log('Unarchive Clicked');
+      fetch(`${url}/emails/${content.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          archived: false
+        })
+      })
+      .then(() => {
+        alert(`${content.subject} is successfully returned to inbox.`);
+        return load_mailbox('inbox');
+      })
+    })
+    
+  } else {
+    archiveButton.addEventListener('click', () => {
+      
       console.log('Archive Clicked');
       fetch(`${url}/emails/${content.id}`, {
           method: 'PUT',
           body: JSON.stringify({
               archived: true
-          })
-      }).then(() => {
+        })
+      })
+      .then(() => {
           alert(`${content.subject} is successfully added to the archived folder.`);
           return load_mailbox('archive');
       });
-  });
-
+    }); 
+  }
+  
   const replyButton = document.querySelector('.reply-button');
   replyButton.addEventListener('click', () => {
       compose_email(content.sender);
@@ -201,12 +221,13 @@ function mark_email_as_read(email_id) {
       body: JSON.stringify({
           read: true
       })
-  }).then(response => {
+    })
+    .then(response => {
       if (response.ok) {
           console.log(`Email ${email_id} read successfully.`);
       } else {
           console.log(`Failed to read email ${email_id}.`);
       }
-  });
-}
+    });
+  }
 
