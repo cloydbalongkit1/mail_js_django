@@ -1,5 +1,4 @@
 let url;
-
 document.addEventListener('DOMContentLoaded', function() {
   url = window.location.href;
 
@@ -233,7 +232,7 @@ function add_event_listeners(content, mailbox) {
   
   const replyButton = document.querySelector('.reply-button');
   replyButton.addEventListener('click', () => {
-    compose_email(content, 'reply'); // -------------------------------------------------->>>>>>>>>>>>>>>>>>>>>>>>>>>
+    compose_email(content, 'reply');
   });
 }
 
