@@ -14,37 +14,46 @@ document.addEventListener('DOMContentLoaded', function() {
 
 });
 
+// compose_email(content.sender, content.subject);
+// function compose_email(senderEmail, subject
 
+function compose_email(content, reply='') {
 
-function compose_email(senderEmail, subject) {
-
-  if (typeof senderEmail !== 'string') {
-    senderEmail = '';
-  }
-  console.log(subject);
+  console.log(content);
   
-
+  if (typeof content.sender !== 'string') {
+    content.sender = '';
+  }
+  console.log(content.subject); // checking the subject on console
+  
   document.querySelector('#emails-view').style.display = 'none';
   document.querySelector('#compose-view').style.display = 'block';
   document.querySelector('#email_content-view').style.display = 'none';
 
-  document.querySelector('#compose-recipients').value = senderEmail;
-  if (subject){
-    if (subject.startsWith('RE:')) {
-      document.querySelector('#compose-subject').value = subject
+  document.querySelector('#compose-recipients').value = content.sender;
+  if (content.subject) {
+    if (content.subject.startsWith('RE:')) {
+      document.querySelector('#compose-subject').value = content.subject
     } else {
-      document.querySelector('#compose-subject').value = `RE: ${subject}`
+      document.querySelector('#compose-subject').value = `RE: ${content.subject}`
     }
   } else {
     document.querySelector('#compose-subject').value = ''
   }
+
   
+  if (reply !== 'reply') {
+    document.querySelector('#compose-body').value = ''
+  } else {
+    document.querySelector('#compose-body').value = 
+      `\n\n\nOn ${content.timestamp}, ${content.sender} wrote: ${content.body}`;
+  }
   
 
+
+  
   document.querySelector('#compose-form').addEventListener('submit', function(event) {
-
-    // Or return false at the end. >>> not sent to backend
-    event.preventDefault();
+    event.preventDefault(); // >>>>>>> Or return false at the end. >>>>>>>>>>> not sent to backend
 
     const recipients = document.querySelector("#compose-recipients").value;
     const subject = document.querySelector("#compose-subject").value;
@@ -58,7 +67,7 @@ function compose_email(senderEmail, subject) {
           body: body,
         })
     })
-    .then(response => response.json())
+    .then(response => response.json()) // checking the backend res // optional
     
     document.querySelector('#compose-recipients').value = '';
     document.querySelector('#compose-subject').value = '';
@@ -120,7 +129,7 @@ function load_mailbox(mailbox) {
       }
     })
     .catch(error => {
-      console.log('Error fetching emails:', error);
+      console.log('Error fetching emails:', error); // backend not load
 
       const errorElement = document.createElement('div');
       errorElement.classList.add('email-boxes');
@@ -148,7 +157,7 @@ function display_email_content(content, mailbox) {
   document.querySelector('#compose-view').style.display = 'none';
   document.querySelector('#email_content-view').style.display = 'block';
 
-  const contentElementParent = document.getElementById('email_content-view');
+  const contentElementParent = document.getElementById('email_content-view'); // previous will not be not seen
   contentElementParent.innerHTML = '';
   
   const contentElement = document.createElement('div');
@@ -192,7 +201,7 @@ function add_event_listeners(content, mailbox) {
     archiveButton.innerHTML = 'Unarchive';
     archiveButton.addEventListener('click', () => {
 
-      console.log('Unarchive Clicked');
+      console.log('Unarchive Clicked'); // checking if the button is clicked
       fetch(`${url}/emails/${content.id}`, {
         method: 'PUT',
         body: JSON.stringify({
@@ -200,7 +209,7 @@ function add_event_listeners(content, mailbox) {
         })
       })
       .then(() => {
-        alert(`${content.subject} is successfully returned to inbox.`);
+        alert(`${content.subject} is successfully returned to inbox.`); // checking if OK
         return load_mailbox('inbox');
       })
     })
@@ -208,7 +217,7 @@ function add_event_listeners(content, mailbox) {
   } else {
     archiveButton.addEventListener('click', () => {
       
-      console.log('Archive Clicked');
+      console.log('Archive Clicked'); // checking if the button is clicked
       fetch(`${url}/emails/${content.id}`, {
           method: 'PUT',
           body: JSON.stringify({
@@ -216,7 +225,7 @@ function add_event_listeners(content, mailbox) {
         })
       })
       .then(() => {
-          alert(`${content.subject} is successfully added to the archived folder.`);
+          alert(`${content.subject} is successfully added to the archived folder.`); // checking if OK
           return load_mailbox('archive');
       });
     }); 
@@ -224,7 +233,7 @@ function add_event_listeners(content, mailbox) {
   
   const replyButton = document.querySelector('.reply-button');
   replyButton.addEventListener('click', () => {
-      compose_email(content.sender, content.subject); // --------------------------------------------------
+    compose_email(content, 'reply'); // -------------------------------------------------->>>>>>>>>>>>>>>>>>>>>>>>>>>
   });
 }
 
