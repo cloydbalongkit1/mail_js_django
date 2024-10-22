@@ -129,14 +129,12 @@ function hide_buttons(buttonClasses) {
 
 
 function add_event_listeners(content, mailbox) {
-    const newArchiveButton = document.querySelector('.archive-button');
-    const newReplyButton = document.querySelector('.reply-button');
+    const archiveButton = document.querySelector('.archive-button');
+    const replyButton = document.querySelector('.reply-button');
 
-    // Remove existing event listeners by cloning and replacing
-    // const newArchiveButton = archiveButton.cloneNode(true);
-    // archiveButton.replaceWith(newArchiveButton);
-    // const newReplyButton = replyButton.cloneNode(true);
-    // replyButton.replaceWith(newReplyButton);
+    // Reset event listeners
+    const newArchiveButton = reset_event_listeners(archiveButton);
+    const newReplyButton = reset_event_listeners(replyButton);
 
     // Set up archive button (unarchive @ archive mailbox)
     if (mailbox === 'archive') {
@@ -191,7 +189,16 @@ function mark_email_as_read(email_id) {
 
 
 //------------------------------------------------>>>>
+
+function reset_event_listeners(element) {
+  let newElement = element.cloneNode(true);
+  element.replaceWith(newElement);
+  return newElement;
+}
+
 function compose_email(content, reply='') {
+  let form = document.querySelector('#compose-form');
+  form = reset_event_listeners(form);
 
   if (typeof content.sender !== 'string') {
       content.sender = '';
@@ -224,9 +231,6 @@ function compose_email(content, reply='') {
   }
 
   // Form submission handler
-  const form = document.querySelector('#compose-form');
-  // Remove any existing event listeners to prevent multiple submissions
-  form.removeEventListener('submit', handleSubmit);
   form.addEventListener('submit', handleSubmit);
 
   // Define the form submission handler
@@ -254,9 +258,7 @@ function compose_email(content, reply='') {
           document.querySelector('#compose-body').value = '';
           // Load the inbox
           load_mailbox('inbox');
-      });
+      })
+      .catch(error => console.error('Error:', error));
   }
 }
-
-
-
