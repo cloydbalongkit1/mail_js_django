@@ -16,64 +16,71 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function compose_email(content, reply='') {
   console.log(content);
-  
+
+  // Ensure sender is a string
   if (typeof content.sender !== 'string') {
-    content.sender = '';
+      content.sender = '';
   }
-  console.log(content.subject); // checking the subject on console
-  
+  console.log(content.subject); // Checking the subject on console
+
+  // Display compose view
   document.querySelector('#emails-view').style.display = 'none';
   document.querySelector('#compose-view').style.display = 'block';
   document.querySelector('#email_content-view').style.display = 'none';
 
+  // Set recipients and subject
   document.querySelector('#compose-recipients').value = content.sender;
   if (content.subject) {
-    if (content.subject.startsWith('RE:')) {
-      document.querySelector('#compose-subject').value = content.subject
-    } else {
-      document.querySelector('#compose-subject').value = `RE: ${content.subject}`
-    }
+      if (content.subject.startsWith('RE:')) {
+          document.querySelector('#compose-subject').value = content.subject;
+      } else {
+          document.querySelector('#compose-subject').value = `RE: ${content.subject}`;
+      }
   } else {
-    document.querySelector('#compose-subject').value = ''
+      document.querySelector('#compose-subject').value = '';
   }
 
-  
+  // Set the body of the email
   if (reply !== 'reply') {
-    document.querySelector('#compose-body').value = ''
+      document.querySelector('#compose-body').value = '';
   } else {
-    document.querySelector('#compose-body').value = 
-      `\nOn ${content.timestamp}, ${content.sender} wrote: ${content.body}`;
+      document.querySelector('#compose-body').value = 
+          `\n...On ${content.timestamp}, ${content.sender} wrote: ${content.body}`;
   }
-  
-  const form = document.querySelector('#compose-form')
-  form.removeEventListener('submit', handleSubmit);
+
+  // Form submission handler
+  const form = document.querySelector('#compose-form');
+  form.removeEventListener('submit', handleSubmit); // Remove any existing event listeners to prevent multiple submissions
   form.addEventListener('submit', handleSubmit);
 
   function handleSubmit(event) {
-    event.preventDefault(); // >>>>>>> Or return false at the end. >>>>>>>>>>> not sent to backend
+      event.preventDefault(); // Prevent default form submission
 
-    const recipients = document.querySelector("#compose-recipients").value;
-    const subject = document.querySelector("#compose-subject").value;
-    const body = document.querySelector("#compose-body").value;    
+      const recipients = document.querySelector("#compose-recipients").value;
+      const subject = document.querySelector("#compose-subject").value;
+      const body = document.querySelector("#compose-body").value;
 
-    fetch(`${url}/emails`, {
-      method: 'POST',
-      body: JSON.stringify({
-          recipients: recipients,
-          subject: subject,
-          body: body,
-        })
-    })
-    .then(response => response.json()) // checking the backend res // optional
-    .then(data => {
-      console.log(data);
-      document.querySelector('#compose-recipients').value = ''; // clearing data from form
-      document.querySelector('#compose-subject').value = '';
-      document.querySelector('#compose-body').value = '';
-      load_mailbox('inbox')
-    });
-  };
+      fetch(`${url}/emails`, {
+          method: 'POST',
+          body: JSON.stringify({
+              recipients: recipients,
+              subject: subject,
+              body: body,
+          })
+      })
+      .then(response => response.json()) // Checking the backend response
+      .then(data => {
+          console.log(data);
+          // Clear the form fields
+          document.querySelector('#compose-recipients').value = '';
+          document.querySelector('#compose-subject').value = '';
+          document.querySelector('#compose-body').value = '';
+          // Load the inbox
+          load_mailbox('inbox');
+      });
+  }
 }
+
 
 
 
@@ -169,7 +176,7 @@ function display_email_content(content, mailbox) {
       
       <button class="btn btn-primary reply-button">Reply</button>
       <button class="ml-2 btn btn-outline-info archive-button">Archive</button>
-      <hr><br>
+      <hr>
       <div style="white-space: pre-wrap;">${content.body}</div>
     `;
   contentElementParent.appendChild(contentElement);
@@ -192,49 +199,51 @@ function hide_buttons(buttonClasses) {
 
 
 function add_event_listeners(content, mailbox) {
-
   const archiveButton = document.querySelector('.archive-button');
-
-  if (mailbox === 'archive') {
-
-    archiveButton.innerHTML = 'Unarchive';
-    archiveButton.addEventListener('click', () => {
-
-      console.log('Unarchive Clicked'); // checking if the button is clicked
-      fetch(`${url}/emails/${content.id}`, {
-        method: 'PUT',
-        body: JSON.stringify({
-          archived: false
-        })
-      })
-      .then(() => {
-        alert(`${content.subject} is successfully returned to inbox.`); // checking if OK
-        return load_mailbox('inbox');
-      })
-    })
-    
-  } else {
-    archiveButton.addEventListener('click', () => {
-      
-      console.log('Archive Clicked'); // checking if the button is clicked
-      fetch(`${url}/emails/${content.id}`, {
-          method: 'PUT',
-          body: JSON.stringify({
-              archived: true
-        })
-      })
-      .then(() => {
-          alert(`${content.subject} is successfully added to the archived folder.`); // checking if OK
-          return load_mailbox('archive');
-      });
-    }); 
-  }
-  
   const replyButton = document.querySelector('.reply-button');
-  replyButton.addEventListener('click', () => {
-    compose_email(content, 'reply');
+
+  // Remove existing event listeners by cloning and replacing
+  const newArchiveButton = archiveButton.cloneNode(true);
+  archiveButton.replaceWith(newArchiveButton);
+
+  const newReplyButton = replyButton.cloneNode(true);
+  replyButton.replaceWith(newReplyButton);
+
+  // Set up archive button (unarchive @ archive mailbox)
+  if (mailbox === 'archive') {
+      newArchiveButton.innerHTML = 'Unarchive';
+      newArchiveButton.addEventListener('click', () => {
+          console.log('Unarchive Clicked'); // ----> Checking button is clicked
+          fetch(`${url}/emails/${content.id}`, {
+              method: 'PUT',
+              body: JSON.stringify({ archived: false })
+          })
+          .then(() => {
+              alert(`${content.subject} is successfully returned to inbox.`);
+              return load_mailbox('inbox');
+          });
+      });
+  } else { // regular archive button (inbox)
+      newArchiveButton.addEventListener('click', () => {
+          console.log('Archive Clicked'); // ----> Checking button is clicked
+          fetch(`${url}/emails/${content.id}`, {
+              method: 'PUT',
+              body: JSON.stringify({ archived: true })
+          })
+          .then(() => {
+              alert(`${content.subject} is successfully added to the archived folder.`);
+              return load_mailbox('archive');
+          });
+      });
+  }
+
+  //reply button
+  newReplyButton.addEventListener('click', () => {
+      compose_email(content, 'reply');
   });
 }
+
+
 
 
 function mark_email_as_read(email_id) {
