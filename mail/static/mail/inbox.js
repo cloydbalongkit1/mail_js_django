@@ -10,14 +10,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // By default, load the inbox
   load_mailbox('inbox');
-
 });
 
-// compose_email(content.sender, content.subject);
-// function compose_email(senderEmail, subject
+
 
 function compose_email(content, reply='') {
-
   console.log(content);
   
   if (typeof content.sender !== 'string') {
@@ -45,12 +42,12 @@ function compose_email(content, reply='') {
     document.querySelector('#compose-body').value = ''
   } else {
     document.querySelector('#compose-body').value = 
-      `On ${content.timestamp}, ${content.sender} wrote: ${content.body}\n\nReply: `;
+      `\nOn ${content.timestamp}, ${content.sender} wrote: ${content.body}`;
   }
   
   const form = document.querySelector('#compose-form')
-  form.removeEventListener('click', handleSubmit);
-  form.addEventListener('click', handleSubmit);
+  form.removeEventListener('submit', handleSubmit);
+  form.addEventListener('submit', handleSubmit);
 
   function handleSubmit(event) {
     event.preventDefault(); // >>>>>>> Or return false at the end. >>>>>>>>>>> not sent to backend
@@ -69,8 +66,7 @@ function compose_email(content, reply='') {
     })
     .then(response => response.json()) // checking the backend res // optional
     .then(data => {
-      console.log(data); // checking the data on console
-
+      console.log(data);
       document.querySelector('#compose-recipients').value = ''; // clearing data from form
       document.querySelector('#compose-subject').value = '';
       document.querySelector('#compose-body').value = '';
@@ -143,7 +139,8 @@ function load_mailbox(mailbox) {
 
 
 
-//-------------------------------------------------------------functions supports each other
+//functions supports each other
+
 function email_clicked(email_id, mailbox) {
   fetch(`${url}/emails/${email_id}`)
       .then(response => response.json())
@@ -173,7 +170,7 @@ function display_email_content(content, mailbox) {
       <button class="btn btn-primary reply-button">Reply</button>
       <button class="ml-2 btn btn-outline-info archive-button">Archive</button>
       <hr><br>
-      <p>${content.body}</p>
+      <div style="white-space: pre-wrap;">${content.body}</div>
     `;
   contentElementParent.appendChild(contentElement);
 
