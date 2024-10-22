@@ -15,9 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 function compose_email(content, reply='') {
-  console.log(content);
 
-  // Ensure sender is a string
   if (typeof content.sender !== 'string') {
       content.sender = '';
   }
@@ -45,14 +43,16 @@ function compose_email(content, reply='') {
       document.querySelector('#compose-body').value = '';
   } else {
       document.querySelector('#compose-body').value = 
-          `\n...On ${content.timestamp}, ${content.sender} wrote: ${content.body}`;
+          `\nOn ${content.timestamp}, ${content.sender} wrote: ${content.body}`;
   }
 
   // Form submission handler
   const form = document.querySelector('#compose-form');
-  form.removeEventListener('submit', handleSubmit); // Remove any existing event listeners to prevent multiple submissions
+  // Remove any existing event listeners to prevent multiple submissions
+  form.removeEventListener('submit', handleSubmit);
   form.addEventListener('submit', handleSubmit);
 
+  // Define the form submission handler
   function handleSubmit(event) {
       event.preventDefault(); // Prevent default form submission
 
@@ -80,7 +80,6 @@ function compose_email(content, reply='') {
       });
   }
 }
-
 
 
 
@@ -199,51 +198,47 @@ function hide_buttons(buttonClasses) {
 
 
 function add_event_listeners(content, mailbox) {
-  const archiveButton = document.querySelector('.archive-button');
-  const replyButton = document.querySelector('.reply-button');
+    const archiveButton = document.querySelector('.archive-button');
+    const replyButton = document.querySelector('.reply-button');
 
-  // Remove existing event listeners by cloning and replacing
-  const newArchiveButton = archiveButton.cloneNode(true);
-  archiveButton.replaceWith(newArchiveButton);
+    // Remove existing event listeners by cloning and replacing
+    const newArchiveButton = archiveButton.cloneNode(true);
+    archiveButton.replaceWith(newArchiveButton);
+    const newReplyButton = replyButton.cloneNode(true);
+    replyButton.replaceWith(newReplyButton);
 
-  const newReplyButton = replyButton.cloneNode(true);
-  replyButton.replaceWith(newReplyButton);
+    // Set up archive button (unarchive @ archive mailbox)
+    if (mailbox === 'archive') {
+        newArchiveButton.innerHTML = 'Unarchive';
+        newArchiveButton.addEventListener('click', () => {
+            console.log('Unarchive Clicked'); // ----> Checking button is clicked
+            fetch(`${url}/emails/${content.id}`, {
+                method: 'PUT',
+                body: JSON.stringify({ archived: false })
+            })
+            .then(() => {
+                alert(`${content.subject} is successfully returned to inbox.`);
+                return load_mailbox('inbox');
+            });
+        });
+    } else { // regular archive button (inbox)
+        newArchiveButton.addEventListener('click', () => {
+            console.log('Archive Clicked'); // ----> Checking button is clicked
+            fetch(`${url}/emails/${content.id}`, {
+                method: 'PUT',
+                body: JSON.stringify({ archived: true })
+            })
+            .then(() => {
+                alert(`${content.subject} is successfully added to the archived folder.`);
+                return load_mailbox('archive');
+            });
+        });
+    }
 
-  // Set up archive button (unarchive @ archive mailbox)
-  if (mailbox === 'archive') {
-      newArchiveButton.innerHTML = 'Unarchive';
-      newArchiveButton.addEventListener('click', () => {
-          console.log('Unarchive Clicked'); // ----> Checking button is clicked
-          fetch(`${url}/emails/${content.id}`, {
-              method: 'PUT',
-              body: JSON.stringify({ archived: false })
-          })
-          .then(() => {
-              alert(`${content.subject} is successfully returned to inbox.`);
-              return load_mailbox('inbox');
-          });
-      });
-  } else { // regular archive button (inbox)
-      newArchiveButton.addEventListener('click', () => {
-          console.log('Archive Clicked'); // ----> Checking button is clicked
-          fetch(`${url}/emails/${content.id}`, {
-              method: 'PUT',
-              body: JSON.stringify({ archived: true })
-          })
-          .then(() => {
-              alert(`${content.subject} is successfully added to the archived folder.`);
-              return load_mailbox('archive');
-          });
-      });
-  }
-
-  //reply button
-  newReplyButton.addEventListener('click', () => {
-      compose_email(content, 'reply');
-  });
+    newReplyButton.addEventListener('click', () => {
+        compose_email(content, 'reply');
+    });
 }
-
-
 
 
 function mark_email_as_read(email_id) {
