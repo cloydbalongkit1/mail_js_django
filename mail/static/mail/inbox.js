@@ -45,18 +45,19 @@ function compose_email(content, reply='') {
     document.querySelector('#compose-body').value = ''
   } else {
     document.querySelector('#compose-body').value = 
-      `\n\n\nOn ${content.timestamp}, ${content.sender} wrote: ${content.body}`;
+      `On ${content.timestamp}, ${content.sender} wrote: ${content.body}\n\nReply: `;
   }
   
+  const form = document.querySelector('#compose-form')
+  form.removeEventListener('click', handleSubmit);
+  form.addEventListener('click', handleSubmit);
 
-
-  
-  document.querySelector('#compose-form').addEventListener('submit', function(event) {
+  function handleSubmit(event) {
     event.preventDefault(); // >>>>>>> Or return false at the end. >>>>>>>>>>> not sent to backend
 
     const recipients = document.querySelector("#compose-recipients").value;
     const subject = document.querySelector("#compose-subject").value;
-    const body = document.querySelector("#compose-body").value;
+    const body = document.querySelector("#compose-body").value;    
 
     fetch(`${url}/emails`, {
       method: 'POST',
@@ -67,13 +68,15 @@ function compose_email(content, reply='') {
         })
     })
     .then(response => response.json()) // checking the backend res // optional
-    
-    document.querySelector('#compose-recipients').value = '';
-    document.querySelector('#compose-subject').value = '';
-    document.querySelector('#compose-body').value = '';
+    .then(data => {
+      console.log(data); // checking the data on console
 
-    load_mailbox('inbox')
-  });
+      document.querySelector('#compose-recipients').value = ''; // clearing data from form
+      document.querySelector('#compose-subject').value = '';
+      document.querySelector('#compose-body').value = '';
+      load_mailbox('inbox')
+    });
+  };
 }
 
 
