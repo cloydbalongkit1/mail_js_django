@@ -14,75 +14,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-function compose_email(content, reply='') {
-
-  if (typeof content.sender !== 'string') {
-      content.sender = '';
-  }
-  console.log(content.subject); // Checking the subject on console
-
-  // Display compose view
-  document.querySelector('#emails-view').style.display = 'none';
-  document.querySelector('#compose-view').style.display = 'block';
-  document.querySelector('#email_content-view').style.display = 'none';
-
-  // Set recipients and subject
-  document.querySelector('#compose-recipients').value = content.sender;
-  if (content.subject) {
-      if (content.subject.startsWith('RE:')) {
-          document.querySelector('#compose-subject').value = content.subject;
-      } else {
-          document.querySelector('#compose-subject').value = `RE: ${content.subject}`;
-      }
-  } else {
-      document.querySelector('#compose-subject').value = '';
-  }
-
-  // Set the body of the email
-  if (reply !== 'reply') {
-      document.querySelector('#compose-body').value = '';
-  } else {
-      document.querySelector('#compose-body').value = 
-          `\nOn ${content.timestamp}, ${content.sender} wrote: ${content.body}`;
-  }
-
-  // Form submission handler
-  const form = document.querySelector('#compose-form');
-  // Remove any existing event listeners to prevent multiple submissions
-  form.removeEventListener('submit', handleSubmit);
-  form.addEventListener('submit', handleSubmit);
-
-  // Define the form submission handler
-  function handleSubmit(event) {
-      event.preventDefault(); // Prevent default form submission
-
-      const recipients = document.querySelector("#compose-recipients").value;
-      const subject = document.querySelector("#compose-subject").value;
-      const body = document.querySelector("#compose-body").value;
-
-      fetch(`${url}/emails`, {
-          method: 'POST',
-          body: JSON.stringify({
-              recipients: recipients,
-              subject: subject,
-              body: body,
-          })
-      })
-      .then(response => response.json()) // Checking the backend response
-      .then(data => {
-          console.log(data);
-          // Clear the form fields
-          document.querySelector('#compose-recipients').value = '';
-          document.querySelector('#compose-subject').value = '';
-          document.querySelector('#compose-body').value = '';
-          // Load the inbox
-          load_mailbox('inbox');
-      });
-  }
-}
-
-
-
 function load_mailbox(mailbox) {
   document.querySelector('#emails-view').style.display = 'block';
   document.querySelector('#compose-view').style.display = 'none';
@@ -198,14 +129,14 @@ function hide_buttons(buttonClasses) {
 
 
 function add_event_listeners(content, mailbox) {
-    const archiveButton = document.querySelector('.archive-button');
-    const replyButton = document.querySelector('.reply-button');
+    const newArchiveButton = document.querySelector('.archive-button');
+    const newReplyButton = document.querySelector('.reply-button');
 
     // Remove existing event listeners by cloning and replacing
-    const newArchiveButton = archiveButton.cloneNode(true);
-    archiveButton.replaceWith(newArchiveButton);
-    const newReplyButton = replyButton.cloneNode(true);
-    replyButton.replaceWith(newReplyButton);
+    // const newArchiveButton = archiveButton.cloneNode(true);
+    // archiveButton.replaceWith(newArchiveButton);
+    // const newReplyButton = replyButton.cloneNode(true);
+    // replyButton.replaceWith(newReplyButton);
 
     // Set up archive button (unarchive @ archive mailbox)
     if (mailbox === 'archive') {
@@ -256,4 +187,76 @@ function mark_email_as_read(email_id) {
       }
     });
   }
+
+
+
+//------------------------------------------------>>>>
+function compose_email(content, reply='') {
+
+  if (typeof content.sender !== 'string') {
+      content.sender = '';
+  }
+  console.log(content.subject); // Checking the subject on console
+
+  // Display compose view
+  document.querySelector('#emails-view').style.display = 'none';
+  document.querySelector('#compose-view').style.display = 'block';
+  document.querySelector('#email_content-view').style.display = 'none';
+
+  // Set recipients and subject
+  document.querySelector('#compose-recipients').value = content.sender;
+  if (content.subject) {
+      if (content.subject.startsWith('RE:')) {
+          document.querySelector('#compose-subject').value = content.subject;
+      } else {
+          document.querySelector('#compose-subject').value = `RE: ${content.subject}`;
+      }
+  } else {
+      document.querySelector('#compose-subject').value = '';
+  }
+
+  // Set the body of the email
+  if (reply !== 'reply') {
+      document.querySelector('#compose-body').value = '';
+  } else {
+      document.querySelector('#compose-body').value = 
+          `\nOn ${content.timestamp}, ${content.sender} wrote: ${content.body}`;
+  }
+
+  // Form submission handler
+  const form = document.querySelector('#compose-form');
+  // Remove any existing event listeners to prevent multiple submissions
+  form.removeEventListener('submit', handleSubmit);
+  form.addEventListener('submit', handleSubmit);
+
+  // Define the form submission handler
+  function handleSubmit(event) {
+      event.preventDefault(); // Prevent default form submission
+
+      const recipients = document.querySelector("#compose-recipients").value;
+      const subject = document.querySelector("#compose-subject").value;
+      const body = document.querySelector("#compose-body").value;
+
+      fetch(`${url}/emails`, {
+          method: 'POST',
+          body: JSON.stringify({
+              recipients: recipients,
+              subject: subject,
+              body: body,
+          })
+      })
+      .then(response => response.json()) // Checking the backend response
+      .then(data => {
+          console.log(data);
+          // Clear the form fields
+          document.querySelector('#compose-recipients').value = '';
+          document.querySelector('#compose-subject').value = '';
+          document.querySelector('#compose-body').value = '';
+          // Load the inbox
+          load_mailbox('inbox');
+      });
+  }
+}
+
+
 
